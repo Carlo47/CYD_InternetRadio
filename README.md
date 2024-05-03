@@ -15,15 +15,15 @@ UDA1334A which I used for my stereo headphones.
 
 ![img1](images/UA1334A.png)
 
-I wired the CYD and the UA1334 as shown in the table:
+I wired the CYD and the UDA1334 as shown in the table:
 
-| Connector P3 | UA1334A |
-|:------------:|:-------:|
-|    IO 22     | DIN     |
-|    IO 21     | WSEL    |
+| Connector P3 | UDA1334A |
+|:------------:|:--------:|
+|    IO 22     | DIN      |
+|    IO 21     | WSEL     |
 
-| Connector CN1 | UA1334A |
-|:-------------:|:-------:|
-|    GND        | GND     |
-|    IO 27      | BCLK    |
-|    3.3V       | VIN     |
+| Connector CN1 | UDA1334A |
+|:-------------:|:--------:|
+|    GND        | GND      |
+|    IO 27      | BCLK     |
+|    3.3V       | VIN      |
