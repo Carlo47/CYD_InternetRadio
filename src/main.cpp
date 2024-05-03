@@ -15,9 +15,9 @@
  * ------------ With external DAC UDA1334A -----------------------------
  * 
  *                              .-----------------. 
- *                  RX  -->     o DIN             |  
- *                  D4  -->     o LRC        UDA  |    
- *                  D8  -->     o BCLK      1334A |   
+ *                  22  -->     o DIN             |  
+ *                  21  -->     o WSEL       UDA  |    
+ *                  27  -->     o BCLK      1334A |   
  *                  3.3V-->     o Vin (3.3-5V)  +---- 3.5mm Stereo Headphone jack 
  *                  GND -->     o GND           +----
  *                              `-----------------´    
@@ -36,8 +36,8 @@
 #include "UiComponents.h"
 #include "Wait.h"
 
-const char ssid[]     = "Your SSID";
-const char password[] = "Your Password";
+const char ssid[]            = "Your SSID";
+const char password[]        = "Your Password";
 const char NTP_SERVER_POOL[] = "ch.pool.ntp.org";
 const char TIME_ZONE[]       = "MEZ-1MESZ-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
 const char HOST_NAME[]       = "CYD-RADIO";
