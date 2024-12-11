@@ -57,5 +57,5 @@ channels, see the description in the repository [ESP32Internetradio](https://git
 ![img1](images/MAX98357A.png) MAX98357A
 
 
-### Anmeldung im WLAN
+### Log in to the WLAN
 When the web radio is put into operation for the first time, the AutoConnectAP access point is started. Log in here with your cell phone and then enter the SSID and password of your router via the web browser at the URL 192.168.4.1. The login data is then saved permanently so that the web radio connects automatically in future.
