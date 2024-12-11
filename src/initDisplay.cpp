@@ -3,7 +3,10 @@
 #include "lgfx_ESP32_2432S028.h"
 #include <SPI.h>
 
+
 using Action = void(&)(LGFX &lcd);
+
+GFXfont defaultFont = fonts::DejaVu18;
 
 void nop(LGFX &lcd){};
 
@@ -11,8 +14,6 @@ void calibrateTouchPad(LGFX &lcd)
   {
     lcd.fillScreen(TFT_BLACK);
     lcd.setTextSize((std::max(lcd.width(), lcd.height()) + 255) >> 8);
-
-    //if (lcd.width() < lcd.height()) lcd.setRotation(lcd.getRotation() ^ 1);
 
     // Draws guidance text on the screen
     lcd.setTextDatum(textdatum_t::middle_center);
@@ -24,7 +25,7 @@ void calibrateTouchPad(LGFX &lcd)
     // that appear in the four corners of the screen in sequence.
     uint16_t fg = TFT_WHITE;
     uint16_t bg = TFT_BLACK;
-    if (lcd.isEPD()) std::swap(fg, bg);
+
     uint16_t caldata[8];
     lcd.calibrateTouch(caldata, fg, bg, std::max(lcd.width(), lcd.height()) >> 3);
     //lcd.calibrateTouch(nullptr, fg, bg, 20);
@@ -99,7 +100,31 @@ text size Y    = %4.2f
 }
 
 
-GFXfont defaultFont = fonts::DejaVu18;
+/**
+ * Corrects the rotation of the touchpad when 
+ * the display is rotated with setRotation().
+ */
+bool getMappedTouch(LGFX &lcd, int &x, int &y)
+{
+  int x0, y0;
+  uint8_t rot = lcd.getRotation();
+  if(lcd.getTouch(&x0, &y0))
+  {
+    if (rot == 1 || rot == 3)
+    {
+      x = map(x0, lcd.width(),  0, 0, lcd.width());
+      y = map(y0, lcd.height(), 0, 0, lcd.height());
+    }
+    else
+    {
+      x = x0;
+      y = y0;
+    }
+    return true;
+  }
+  return false;
+}
+
 
 /**
  * Initialize display and call the greeting function.
@@ -109,13 +134,15 @@ GFXfont defaultFont = fonts::DejaVu18;
 */
 void initDisplay(LGFX &lcd, uint8_t rotation=0, GFXfont *theFont=&defaultFont, Action greet=nop)
   {
-    lcd.begin() ? log_i("--> done") : log_i("--> failed");
-    lcd.clear();
-    lcd.setTextSize(1.0);
-    lcd.setTextDatum(lgfx::textdatum::TL_DATUM);
-    lcd.setFont(theFont);
-    lcd.setRotation(rotation);
-    lcd.setBrightness(255);
-    greet(lcd);
+    if (lcd.begin())
+    {
+      lcd.clear();
+      lcd.setTextSize(1.0);
+      lcd.setTextDatum(lgfx::textdatum::TL_DATUM);
+      lcd.setFont(theFont);
+      lcd.setRotation(rotation);
+      lcd.setBrightness(255);
+      greet(lcd);
+    }
     log_i("==> done");
   }
