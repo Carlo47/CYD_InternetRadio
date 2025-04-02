@@ -7,8 +7,8 @@ extern float currentVolume;
 
 
 /**
- * Print alarm times retrieved from preferences namespace "alarms"
- * and also piepser state, clock variant and INIT_FLAG
+ * Print the key/value pairs stored in the preferences
+ * namespace SETTINGS of the NVS
  */
 void printPrefs()
 {
