@@ -1,6 +1,8 @@
 /**
  * Program      CYD_InternetRadio.cpp
- * Author       2024-12-08 Charles Geiser (https://www.dodeka.ch)  
+ * Author       2024-12-08 Charles Geiser (https://www.dodeka.ch)
+ *              2025-04-13 Updated to work again with the modified 
+ *                         AudioTools and ESP32AsyncWebserver libraries 
  *  
  * Purpose      The program shows how to use some functions of the versatile 
  *              AudioTools library by Phil Schatzmann and how to realize an 
@@ -64,17 +66,15 @@
  *              https://github.com/KrisKasprzak/FontConvert/blob/main/FontConvert.zip
  *              http://oleddisplay.squix.ch/
  */
-#include <Arduino.h>
-#include <WiFi.h>
+#define WEBSERVER_H         // Workaround to eliminate conflicting definitions
+#define HTTP_ANY 0b01111111 // in the libs AudioTools and ESP32AsyncWebserver
+
 #include <AudioTools.h>
 #include <AudioTools/AudioCodecs/CodecMP3Helix.h>
-#include <Preferences.h>
-#include <ESPAsyncWebServer.h>
 #include "ESP32AutoConnect.h"
-#include "lgfx_ESP32_2432S028.h"
+#include "UiComponents.h"
 #include "Calibri8pt8b.h"
 #include "Calibri12pt8b.h"
-#include "UiComponents.h"
 #include "Wait.h"
 
 const char NTP_SERVER_POOL[] = "ch.pool.ntp.org";
@@ -87,9 +87,11 @@ const int I2S_DOUT = GPIO_NUM_22;  // --> DIN  |               // 27 |
 
 AsyncWebServer server(80);
 
-I2SConfig config;
-ICYStream url(1024);
-//ICYStream url(ssid, password); // Your WiFi SSID and password
+I2SConfig config;       
+//ICYStream url(1024);  // Does not work anymore
+
+URLStream url(1024);    // Use URLStream instead, but no metadata is available
+
 I2SStream i2s;   // final output of decoded stream, fetched to the external DAC
 VolumeStream volume(i2s);
 EncodedAudioStream dec(&volume, new MP3DecoderHelix()); // decode stream and route it to the volume control
