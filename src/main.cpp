@@ -1,7 +1,7 @@
 /**
  * Program      CYD_InternetRadio.cpp
  * Author       2024-12-08 Charles Geiser (https://www.dodeka.ch)
- *              2025-04-13 Updated to work again with the modified 
+ *              2025-05-05 Updated to work again with the modified 
  *                         AudioTools and ESP32AsyncWebserver libraries 
  *  
  * Purpose      The program shows how to use some functions of the versatile 
@@ -88,9 +88,7 @@ const int I2S_DOUT = GPIO_NUM_22;  // --> DIN  |               // 27 |
 AsyncWebServer server(80);
 
 I2SConfig config;       
-//ICYStream url(1024);  // Does not work anymore
-
-URLStream url(1024);    // Use URLStream instead, but no metadata is available
+ICYStream url(1024);  // or use URLStream url(1024) but no meta data evailable
 
 I2SStream i2s;   // final output of decoded stream, fetched to the external DAC
 VolumeStream volume(i2s);
@@ -138,6 +136,8 @@ Radiostation radioStation[] =
   { "BLASMUSIK",       "http://stream.bayerwaldradio.com/allesblasmusik" },
   { "Klassik Radio",   "http://live.streams.klassikradio.de/klassikradio-deutschland/stream/mp3" },
   { "Radio Classique", "http://radioclassique.ice.infomaniak.ch/radioclassique-high.mp3" },
+  { "France Musique",  "http://icecast.radiofrance.fr/francemusique-midfi.mp3" },
+  { "France Musique Plus", "http://icecast.radiofrance.fr/francemusiqueclassiqueplus-midfi.mp3" },
   { "BR Klassik",      "https://dispatcher.rndfnk.com/br/brklassik/live/mp3/mid" },
   { "DLF",        "http://st01.dlf.de/dlf/01/128/mp3/stream.mp3" },
   { "WDR",        "https://wdr-wdr2-rheinland.icecastssl.wdr.de/wdr/wdr2/rheinland/mp3/128/stream.mp3" },
