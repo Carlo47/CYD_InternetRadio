@@ -5,12 +5,13 @@
  * 
  * Purpose      Declaration of the class ESP32AutoConnect           
  */
-
+#pragma once
 #include "Arduino.h"
+#include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <Preferences.h>
-
-#pragma once
+#include <LovyanGFX.hpp>
+#include "lgfx_esp32-2432S028.h"
 
 class ESP32AutoConnect 
 {

@@ -124,6 +124,7 @@ void UiButton::clearLabel()
 {
     _lcd.setTextColor(_parent->getPanelColor());
     _lcd.drawString(_label, _x+_w+_d, _y+2+_h/2);
+    log_i("_label=%s, color=%d", _label, _parent->getPanelColor());
     _lcd.setTextColor(_theme._textColor); 
 }
 
@@ -158,13 +159,23 @@ void UiLed::draw()
     _lcd.setTextDatum(textdatum_t::middle_left);
     _lcd.setTextColor(_theme._textColor);
     _lcd.setFont(_theme._font);
-    _lcd.drawString(_label, _x+_radius*2+_d, _y);
+    _lcd.drawString(_label, _x+_radius+2*_d, _y);
 }
 
 bool UiLed::touched(int x, int y)
 {
     return (x > _x-_radius && x < _x+_radius && y > _y-_radius && y < _y+_radius);
 }
+
+
+void UiLed::clearLabel()
+{
+    _lcd.setFont(_theme._font);
+    _lcd.setTextColor(_parent->getPanelColor());
+    _lcd.drawString(_label, _x+_radius+2*_d, _y);
+    _lcd.setTextColor(_theme._textColor);
+}
+
 
 void UiLed::setLabel(String txt)
 {
@@ -333,10 +344,10 @@ LGFX &UiPanel::getScreen()
 
 void UiPanel::panelText(int x, int y, String text, int textColor, GFXfont font)
 {
-    LGFX lcd = getScreen();
-    lcd.setFont(&font);
-    lcd.setTextColor(textColor);
-    lcd.drawString(text, _x+x, _y+y);
+    //LGFX lcd = getScreen();
+    _lcd.setFont(&font);
+    _lcd.setTextColor(textColor);
+    _lcd.drawString(text, _x+x, _y+y);
 }
 // --- UiPanel ---
 

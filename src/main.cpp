@@ -1,30 +1,52 @@
 /**
  * Program      CYD_InternetRadio.cpp
+ * 
  * Author       2024-12-08 Charles Geiser (https://www.dodeka.ch)
  *              2025-05-05 Updated to work again with the modified 
  *                         AudioTools and ESP32AsyncWebserver libraries 
+ *              2025-09-15 Platformio and source code adapted to use Arduino Framework 3.3.0 
+ *                         To do this, you need to install the Platformio extension 
+ *                         pioarduino IDE and replace in platformio.ini the line 
+ *                         platform = espressif32 
+ *                         with 
+ *              platform = https://github.com/pioarduino/platform-espressif32/releases/download/55.03.30-2/platform-espressif32.zip.
  *  
  * Purpose      The program shows how to use some functions of the versatile 
  *              AudioTools library by Phil Schatzmann and how to realize an 
  *              internet radio with touch screen operation.
  * 
  *              The initial WiFi connection is established with the cell phone 
- *              using AutoConnect and calling up the website 192.168.4.1  
+ *              using AutoConnectAP and calling up the website 192.168.4.1  
  * 
  * Board        ESP32-2432S028R aka CYD or Cheap Yellow Display
- * 
+ *  
  * Remarks      👉 No DAC such as the PCM5102, UDA1334A or VS1053B 
  *              is required for output to the speaker connector, but then the 
  *              touchpad is blocked because the DAC output pin GPIO_NUM_25 is 
  *              used for the clock signal of the touchpad of the CYD.
  * 
+ *              It is better to use an external DAC, e.g. the UDA1334A for 
+ *              stereo headphones or 2 Max98357 for speakers.
+ * 
  *              To display metadata with correct german "Umlaute" we must
  *              supply a font with a coding range from 32 to 255. For this 
  *              purpose, we can convert the ttf font Calibri or any other  
- *              with the fontconvert tool and include the resulting .h file.
+ *              with the fontconvert tool and include the resulting header file.
  * 
  *              fontconvert c:\windows\fonts\calibri.ttf 12 32 255 > Calibri12pt8b.h  
  * 
+ * Caveats      ☢️ The touchpad and SD card are wired on the circuit board in such 
+ *              a way that they cannot be used simultaneously. Therefore, the 
+ *              touchpad function must be interrupted in order to activate the 
+ *              SD card and take a screenshot. Afterwards, the SD card is 
+ *              deactivated and the touchpad is put back into operation.
+ *
+ *              👉 The new AudioTools library needs arduino framework 3.x which is not
+ *              supported in platformio so we have to add this line in platformio.ini:
+ *                platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+ *              instead of
+ *                platform = espressif32
+ *
  * Wiring
  * ------------ With external DAC UDA1334A -----------------------------
  * 
@@ -66,16 +88,26 @@
  *              https://github.com/KrisKasprzak/FontConvert/blob/main/FontConvert.zip
  *              http://oleddisplay.squix.ch/
  */
-#define WEBSERVER_H         // Workaround to eliminate conflicting definitions
-#define HTTP_ANY 0b01111111 // in the libs AudioTools and ESP32AsyncWebserver
-
 #include <AudioTools.h>
 #include <AudioTools/AudioCodecs/CodecMP3Helix.h>
+#include <SD.h>
 #include "ESP32AutoConnect.h"
 #include "UiComponents.h"
 #include "Calibri8pt8b.h"
 #include "Calibri12pt8b.h"
 #include "Wait.h"
+
+/** CYD rotation definitions. The origin is always upper left corner
+o-------------.    o---|¨|--.    o-------------.    o--------.
+|  LANDSCAPE  |    |        |   -|  LANDSCAPE  |    |        |
+|  USB RIGHT  |-   |PORTRAIT|   -|  USB LEFT   |    |PORTRAIT|
+|             |-   | USB UP |    |             |    |USB DOWN|
+'-------------'    |        |    '-------------'    |        |
+                   |        |                       |        |
+                   '--------'                       '--|_|---'
+*/
+enum class ROTATION { LANDSCAPE_USB_RIGHT, PORTRAIT_USB_UP, 
+                      LANDSCAPE_USB_LEFT,  PORTRAIT_USB_DOWN };
 
 const char NTP_SERVER_POOL[] = "ch.pool.ntp.org";
 const char TIME_ZONE[]       = "MEZ-1MESZ-2,M3.5.0/02:00:00,M10.5.0/03:00:00";
@@ -87,8 +119,8 @@ const int I2S_DOUT = GPIO_NUM_22;  // --> DIN  |               // 27 |
 
 AsyncWebServer server(80);
 
-I2SConfig config;       
-ICYStream url(1024);  // or use URLStream url(1024) but no meta data evailable
+I2SConfig config;
+ICYStream url(1024);      // or use URLStream url(1024) but no meta data evailable
 
 I2SStream i2s;   // final output of decoded stream, fetched to the external DAC
 VolumeStream volume(i2s);
@@ -101,11 +133,9 @@ using Radiostation = struct rs{ const char *name; const char *url; };
 //                    Text       Background  Border      Shadow      Font
 UiTheme dateTimeTheme(TFT_GREEN, DARKERGREY, DARKERGREY, DARKERGREY, &fonts::FreeSans12pt7b);
 
-enum class ROTATION { LANDSCAPE_USB_RIGHT, PORTRAIT_USB_UP, 
-                      LANDSCAPE_USB_LEFT,  PORTRAIT_USB_DOWN };
-
 LGFX lcd;
 GFXfont myFont = fonts::DejaVu18;
+SPIClass sdcardSPI(VSPI); // uncomment this line to take screenshots
 Wait waitDateTime(1000);  // diplay date and time every second
 Preferences prefs;        // stores current station and volume
 
@@ -115,9 +145,13 @@ extern void calibrateTouchPad(LGFX &lcd);
 extern bool getMappedTouch(LGFX &lcd, int &x, int &y);
 extern void initESP32AutoConnect(AsyncWebServer &webServer, Preferences &prefs, const char hostname[]);
 extern void initDisplay(LGFX &lcd, uint8_t rot, GFXfont *theFont=&myFont, Action greet=nop);
-extern bool initWiFi(const char ssid[], const char password[], const char hostname[]);
 extern void initPrefs();
 extern void printPrefs();
+extern void initSDCard(SPIClass &spi);
+extern void printSDCardInfo();
+extern void listFiles(File dir, int indent=0);
+extern bool saveBmpToSD_16bit(LGFX &lcd, const char *filename);
+extern bool saveBmpToSD_24bit(LGFX &lcd, const char *filename);
 extern GFXfont defaultFont;
 
 
@@ -165,7 +199,6 @@ void prevStation();
 void showCurrent();
 void cbShowMetaData(MetaDataType info, const char *str, int len);
 
-
 class UiPanelTitle : public UiPanel
 {
     public:
@@ -179,7 +212,7 @@ class UiPanelTitle : public UiPanel
         {
             UiPanel::show();
             _lcd.setTextDatum(textdatum_t::middle_left);
-            panelText(60, 20, "CYD Web Radio", TFT_MAROON, fonts::DejaVu18);
+            panelText(60, 20, "CYD Web Radio", TFT_MAROON, fonts::DejaVu24);
         }
     private:
 };
@@ -219,10 +252,13 @@ class UiPanelMetaData : public UiPanel
         UiPanelMetaData(LGFX &lcd, int x, int y, int w, int h, int bgColor, bool hidden=true) : 
             UiPanel(lcd, x, y, w, h, bgColor, hidden) 
         {
-            if (! _hidden) { show(); } 
-            panelText(5, 18, "Composer", TFT_MAROON, Calibri12pt8b);
-            panelText(5, 38, "Opus", TFT_MAROON, Calibri8pt8b);
-        }   
+            if (! _hidden) 
+            { 
+              show(); 
+              panelText(5, 18, "Composer", TFT_MAROON, Calibri12pt8b);
+              panelText(5, 38, "Opus", TFT_MAROON, Calibri8pt8b);
+            }
+        }
 };
 
 
@@ -251,15 +287,15 @@ class UiPanelRadio : public UiPanel
       int D = 5; // distance from the left panel side
       int d = 4;  // distance between buttons
       UiButton  *_station  = new UiButton(this,  _x+D,           _y+10,  40, 26, defaultTheme, "", ""); 
-      UiHslider *_volume   = new UiHslider(this, _x+D,           _y+60, 220,  8, TFT_GOLD, "Volume");
-      UiButton  *_save     = new UiButton(this,  _x+D,           _y+90,  54, 26, "save"); 
-      UiButton  *_first    = new UiButton(this,  _x+2*D+1*d+54,  _y+90,  40, 26, "<<", "");
-      UiButton  *_next     = new UiButton(this,  _x+2*D+2*d+94,  _y+90,  32, 26, "<", "");
-      UiButton  *_previous = new UiButton(this,  _x+2*D+3*d+126, _y+90,  32, 26, ">", "");
-      UiButton  *_last     = new UiButton(this,  _x+2*D+4*d+158, _y+90,  40, 26, ">>", "Stations");
+      UiHslider *_volume   = new UiHslider(this, _x+D+1*d+65,    _y+60, 155,  8, TFT_GOLD, "Volume");
+      UiButton  *_recall   = new UiButton(this,  _x+D,           _y+50,  60, 26, "recall"); 
+      UiButton  *_store    = new UiButton(this,  _x+D,           _y+90,  60, 26, "store");
+      UiButton  *_first    = new UiButton(this,  _x+2*D+1*d+60,  _y+90,  40, 26, "<<", "");
+      UiButton  *_previous = new UiButton(this,  _x+2*D+2*d+100, _y+90,  32, 26, "<", "");
+      UiButton  *_next     = new UiButton(this,  _x+2*D+3*d+133, _y+90,  32, 26, ">", "");
+      UiButton  *_last     = new UiButton(this,  _x+2*D+4*d+165, _y+90,  40, 26, ">>", "Stations");
       
-
-      std::vector<UiButton *> _btns = { _station, _volume, _first, _next, _previous, _last, _save};
+      std::vector<UiButton *> _btns = { _station, _volume, _first, _previous, _next, _last, _store, _recall};
 };
 
 // Declare pointers to the panels and initialize them with nullptr
@@ -278,13 +314,15 @@ void startPlaying(int station, float loudness)
   dec.begin();
   volume.begin(config);
   volume.setVolume(loudness);
+  UiHslider* s = static_cast<UiHslider *>(panelRadio->getButtons().at(1));
+  s->slideToValue(loudness);
   url.begin(radioStation[station]. url, "audio/mp3");
 }
 
 
 void stopPlaying()
 {
-  panelMetaData->show();
+  //panelMetaData->show();
   url.end();
   volume.end();
   dec.end();
@@ -329,13 +367,27 @@ void prevStation()
   showCurrent();
 }
 
-void savePreference()
+void storePreference()
 {
   prefs.begin("SETTINGS");
   prefs.putInt("STATION", currentStation);
   prefs.putFloat("VOLUME", currentVolume);
   prefs.end();
   log_i("Settings saved to Preferences");
+}
+
+
+void recallPreferences()
+{
+  prefs.begin("SETTINGS");
+  currentStation = prefs.getInt("STATION");
+  currentVolume = prefs.getFloat("VOLUME");
+  prefs.end();
+  log_i("station=%d, volume=%f", currentStation, currentVolume);
+  stopPlaying();
+  startPlaying(currentStation, currentVolume);
+  showCurrent();
+  log_i("Settings recalled from Preferences");
 }
 
 
@@ -346,6 +398,27 @@ void showCurrent()
   panelRadio->getButtons().at(0)->setLabel(radioStation[currentStation].name);
   Serial.printf_P(PSTR("Current Station: %s --> %s\n"), radioStation[currentStation].name, radioStation[currentStation].url);
 };
+
+
+  /**
+   * Save a screenshot to SD card 
+   */
+  void takeScreenShot()
+  {
+    tm   rtcTime;
+    char buf[48];
+    int  bufSize = sizeof(buf);
+    getLocalTime(&rtcTime);
+    strftime(buf, bufSize, "/Screenshots/Scr%Y%m%d_%H%M%S.bmp", &rtcTime);
+    log_i("filename = %s", buf);
+    stopPlaying();
+    initSDCard(sdcardSPI); 
+    saveBmpToSD_24bit(lcd, buf) ? log_i("screenshot %s saved to SD card", buf) : log_i("saving screensho failed");
+    SD.end();
+    sdcardSPI.end();
+    lcd.touch()->init();
+    startPlaying(currentStation, currentVolume);
+  }
 
 
 void cbShowMetaData(MetaDataType info, const char *str, int len)
@@ -400,6 +473,7 @@ void UiPanelRadio::handleKeys(int x, int y)
             switch(i)
             {
                 case 0: // station
+                  takeScreenShot();
                 break;
 
                 case 1: // slider
@@ -427,7 +501,11 @@ void UiPanelRadio::handleKeys(int x, int y)
                 break;
 
                 case 6: // save
-                  savePreference();
+                  storePreference();
+                break;
+                
+                case 7: // recall
+                  recallPreferences();
                 break;
             }
             delay(100);
@@ -460,7 +538,7 @@ void initAudio()
   config = i2s.defaultConfig(TX_MODE);
   config.pin_bck  = I2S_BCKL;
   config.pin_ws   = I2S_WSEL;
-  config.pin_data = I2S_DOUT; 
+  config.pin_data = I2S_DOUT;
   startPlaying(currentStation, currentVolume);
   log_i("==> done");  
 }
@@ -504,21 +582,20 @@ void setup()
   //initDisplay(lcd, static_cast<uint8_t>(ROTATION::LANDSCAPE_USB_RIGHT), &defaultFont, calibrateTouchPad);
   
   // Initialize the display without prior calibration
-  initDisplay(lcd, static_cast<uint8_t>(ROTATION::LANDSCAPE_USB_RIGHT));
-  lcd.print(R"(
-  Connetc your cell phone to
-  the access point 
-  AutoConnectAP and enter
-  your WiFi credentials in a
-  web browser on the page
-  192.168.4.1)");
+  initDisplay(lcd, static_cast<uint8_t>(ROTATION::LANDSCAPE_USB_LEFT));
   initPrefs();
   printPrefs();
   initESP32AutoConnect(server, prefs, HOST_NAME);
+  initPanels();
+  initSDCard(sdcardSPI);      // Init SD card to take screenshots
+  printSDCardInfo();          // Print SD card details 
+  listFiles(SD.open("/"));    // List the files on SD card
+  SD.end();                   // Stop SD card to get touchpad working
+  sdcardSPI.end();
+  lcd.touch()->init();
   initAudio();
   initRTC();
-  initPanels();
-
+  
   waitDateTime.begin();
   log_i("==> done");
 }
@@ -534,6 +611,7 @@ void loop()
     {
         //Serial.printf("Key pressed at %3d, %3d\n", x, y);
         if (!panelRadio->isHidden()) panelRadio->handleKeys(x, y);
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 
     copier.copy();

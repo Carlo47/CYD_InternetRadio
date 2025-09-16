@@ -1,9 +1,8 @@
+#pragma once
 #include <Arduino.h>
 #include <LovyanGFX.hpp>
-#include "lgfx_ESP32_2432S028.h"
+#include "lgfx_esp32-2432S028.h"
 #include <vector>
-
-#pragma once
 
 #define DARKERGREY 0x3166
 
@@ -21,7 +20,7 @@ class UiTheme
                 int bgColor=DARKERGREY, 
                 int borderColor=TFT_SKYBLUE, 
                 int shadowColor=TFT_BLACK, 
-                const GFXfont *font = &fonts::DejaVu18) : _textColor(textColor), _bodyColor(bgColor), 
+                const GFXfont *font = &fonts::DejaVu18) : _textColor(textColor), _bodyColor(bgColor),
                     _borderColor(borderColor), _shadowColor(shadowColor), _font(font)
         {}
 
@@ -104,6 +103,7 @@ class UiButton
         {}
 
         virtual void draw();
+        virtual void clearLabel();
         virtual bool touched(int x, int y);
         void clearValue();
         String getValue();
@@ -113,7 +113,6 @@ class UiButton
         void updateValue(String value);
         void updateValue(int value);
         void updateValue(double value);
-        void clearLabel();
         void setLabel(String label);
         String getLabel();
         void setRange(int min, int max);
@@ -159,6 +158,7 @@ class UiLed : public UiButton
         {}
 
         void draw();
+        void clearLabel();
         bool touched(int x, int y);
         void setLabel(String txt);
         bool isOn();

@@ -28,6 +28,8 @@
 #include "ESP32AutoConnect.h"
 #include "query.h"
 
+extern LGFX lcd;
+
 const bool RW_MODE = false;
 const bool RO_MODE = true;
 
@@ -99,7 +101,7 @@ void ESP32AutoConnect::requestCredentialsAndRestart()
   String& hn = _hostname;
   WiFi.disconnect();
   WiFi.softAP(_apSSID.c_str(), NULL);
-  log_e("\n==> Connect your mobile to %s and \nenter your WLAN credentials on page http://%s", _apSSID.c_str(), WiFi.softAPIP().toString().c_str());
+  lcd.printf("Connect your mobile phone to\n%s, call the url\nhttp://%s in a browser,\nthen select your WLAN and\nenter the password.", _apSSID.c_str(), WiFi.softAPIP().toString().c_str());
 
   String networks = composeNetworkList();
   String query = query0;
@@ -159,12 +161,13 @@ void ESP32AutoConnect::autoConnect()
   {
     if (weAreConnectedToWLAN(_ssid, _password))
     {
-      log_i("\n==> Connected to your WLAN %s. Proceed to http://%s or http://%s", _ssid, WiFi.getHostname(), WiFi.localIP().toString().c_str());
+      lcd.printf("\nConnected to your WLAN\n%s\n as host\n%s", WiFi.SSID(), WiFi.getHostname());
       notConnected = false;
+      vTaskDelay(pdMS_TO_TICKS(2000));
     }
     else
     {
-      log_e("==> Could not connect to your WLAN %s, try again or select another network.", _ssid.c_str());
+      lcd.printf("\nCould not connect to the stored WLAN %s, try again or select another network.", _ssid.c_str());
       requestCredentialsAndRestart();
     }
   }

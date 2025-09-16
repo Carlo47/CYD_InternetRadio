@@ -1,12 +1,12 @@
 #include <Arduino.h>
 #include <LovyanGFX.hpp>
-#include "lgfx_ESP32_2432S028.h"
+#include "lgfx_esp32-2432S028.h"
 #include <SPI.h>
 
 
 using Action = void(&)(LGFX &lcd);
 
-GFXfont defaultFont = fonts::DejaVu18;
+GFXfont defaultFont = fonts::DejaVu12;
 
 void nop(LGFX &lcd){};
 
