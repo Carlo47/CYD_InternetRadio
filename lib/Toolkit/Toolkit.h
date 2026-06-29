@@ -1,0 +1,9 @@
+#pragma once
+#include "EspSys/printSystemInfo.h"
+#include "SDCard/initSDCard.h"
+#include "SDCard/saveBMPtoSD.h"
+#include "Wait/Wait.h"
+#include "WiFi/Esp32AutoConnect.h"
+#include "WiFi/initRTC.h"
+#include "WiFi/initWiFi.h"
+#include "WiFi/timezones.h"

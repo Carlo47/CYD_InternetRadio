@@ -1,0 +1,24 @@
+{
+    "name": "UiComponents",
+    "description": "Implementation of some UI components for ESP32 TFT LCDs",
+    "version": "1.0.0",
+    "license": "The Unlicense",
+    "frameworks": [
+        "arduino",
+        "espidf"
+    ],
+    "platforms": [
+        "espressif32"
+    ],
+    "headers": "UiComponents.h",
+    "authors": [
+        {
+            "name": "Charles Geiser",
+            "url": "https://github.com/Carlo47"
+        },
+        {
+            "name": "Charles Geiser",
+            "maintainer": true
+        }
+    ]
+}

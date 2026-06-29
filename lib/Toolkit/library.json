@@ -1,0 +1,24 @@
+{
+    "name": "Toolkit",
+    "description": "Implementation of often used functions",
+    "keywords": "systeminfo,sdcard,rtc,wifi,autoconnect",
+    "version": "1.0.1",
+    "license": "The Unlicense",
+    "frameworks": [
+        "arduino",
+        "espidf"
+    ],
+    "platforms": [
+        "espressif32"
+    ],
+    "headers": "Toolkit.h",
+    "authors": [
+        {
+            "name": "Charles Geiser",
+            "url": "https://github.com/Carlo47"
+        },
+        {
+            "name": "Microsoft Copilot"
+        }
+    ]
+}

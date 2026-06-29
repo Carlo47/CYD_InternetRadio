@@ -1,0 +1,22 @@
+{
+    "name": "Wait",
+    "description": "Non blocking wait",
+    "keywords": "wait",
+    "version": "1.0.0",
+    "license": "The Unlicense",
+    "frameworks": [
+        "arduino",
+        "espidf"
+    ],
+    "platforms": [
+        "espressif32",
+        "atmelavr"
+    ],
+    "headers": "Wait.h",
+    "authors": [
+        {
+            "name": "Charles Geiser",
+            "url": "https://github.com/Carlo47"
+        }
+    ]
+}
