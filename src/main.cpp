@@ -184,8 +184,7 @@ Radiostation radioStation[] = {
     {"DLF", "http://st01.dlf.de/dlf/01/128/mp3/stream.mp3"},
     {"WDR", "https://wdr-wdr2-rheinland.icecastssl.wdr.de/wdr/wdr2/rheinland/mp3/128/stream.mp3"},
     {"WDR 1 Live", "http://www.wdr.de/wdrlive/media/einslive.m3u"},
-    {"SWR1 BW"
-     "https://liveradio.swr.de/sw282p3/swr1bw/"},
+    {"SWR1 BW", "https://liveradio.swr.de/sw282p3/swr1bw/"},
     {"SWR2", "https://liveradio.swr.de/sw282p3/swr2/"},
     {"SWR3", "https://liveradio.swr.de/sw282p3/swr3/"},
     {"SWR4 BW", "https://liveradio.swr.de/sw282p3/swr4bw/"},
